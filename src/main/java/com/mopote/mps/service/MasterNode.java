@@ -19,12 +19,7 @@ import org.apache.curator.framework.recipes.leader.LeaderSelectorListenerAdapter
 import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.framework.state.ConnectionStateListener;
 import org.apache.curator.utils.ZKPaths;
-import org.quartz.CronTrigger;
-import org.quartz.JobBuilder;
-import org.quartz.JobDetail;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.SchedulerFactory;
+import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,18 +122,75 @@ public class MasterNode extends LeaderSelectorListenerAdapter implements
 	 * 监控任务超时，监控任务依赖关系树
 	 * @param client
 	 */
-	private void startRunningJobListner(CuratorFramework client) {
-		List<String> runningJobs = ZkUtils.getChildren(client, Constants.RUNNING_JOB_PATH);
-		for(String jobStr : runningJobs){
-			String value = ZkUtils.getData(client, Constants.RUNNING_JOB_PATH + Constants.ZK_SEPARATOR + jobStr);
-			if(Constants.RUNNING.equals(value)){
-				//TODO: 检查任务超时
-			}else if(Constants.SUCCESS.equals(value)){
-				//TODO: 检查依赖
-				
-			}else if(Constants.FAILED.equals(value)){
-				//TODO: 任务失败后续处理，如发邮件
+	private void startRunningJobListner(final CuratorFramework client) {
+		Thread listener = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while(true){
+					List<String> runningJobs = ZkUtils.getChildren(client, Constants.RUNNING_JOB_PATH);
+					for(String jobStr : runningJobs){
+						String path = Constants.RUNNING_JOB_PATH + Constants.ZK_SEPARATOR + jobStr;
+						String value = ZkUtils.getData(client, path);
+						if(Constants.RUNNING.equals(value)){
+							//TODO: 检查任务超时
+						}else if(Constants.SUCCESS.equals(value)){
+							//TODO: 检查依赖
+							checkDependency(client,path);
+						}else if(Constants.FAILED.equals(value)){
+							//TODO: 任务失败后续处理，如发邮件
+						}
+					}
+
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+					}
+				}
 			}
+		});
+		listener.start();
+	}
+
+	private void checkDependency(CuratorFramework client, String path) {
+		String jobId = ZkUtils.getData(client,path);
+		List<String> notifyJobs = ZkUtils.getChildren(client,Constants.DEPENDENCY_LISTENER + Constants.ZK_SEPARATOR + jobId);
+		for(String job : notifyJobs){
+			ZkUtils.delete(client,Constants.DEPENDENCY_TREE + Constants.ZK_SEPARATOR + job + Constants.ZK_SEPARATOR + jobId);
+			if (ZkUtils.getChildren(client, Constants.DEPENDENCY_TREE + Constants.ZK_SEPARATOR + job).isEmpty()){
+				JobInfo jobInfo = (JobInfo)ZkUtils.getData(client, Constants.MPS_JOB+Constants.ZK_SEPARATOR+job + Constants.JOB_INFO ,JobInfo.class);
+				// 触发依赖任务
+				try {
+					triggerJob(jobInfo, client);
+				} catch (SchedulerException e) {
+					e.printStackTrace();
+				}
+				// 重建依赖树
+				String[] dependencies = jobInfo.getDependency().split(",");
+				//build dependency tree and listener tree
+				for(String dependency : dependencies){
+					String np = Constants.DEPENDENCY_TREE + Constants.ZK_SEPARATOR + jobInfo.getId();
+					if(!ZkUtils.exist(client,np)){
+						ZkUtils.create(client,np+Constants.ZK_SEPARATOR+dependency);
+					}
+				}
+			}
+		}
+	}
+
+	private void triggerJob(JobInfo jobInfo, CuratorFramework client) throws SchedulerException {
+		if (this.scheduler.checkExists(new JobKey(jobInfo.getId().toString()))) {
+			this.scheduler.triggerJob(new JobKey(jobInfo.getId().toString()));
+		} else {
+			Trigger trigger = newTrigger().withIdentity(jobInfo.getId().toString()).startNow()
+					.build();
+			JobDetail job = JobBuilder.newJob(DistributionJob.class)
+					.withIdentity(jobInfo.getId().toString()).build();
+			job.getJobDataMap().put("TaskNodes", this.taskNodes);
+			job.getJobDataMap().put("AllocationAlgorithm", this.allocAlgori);
+			job.getJobDataMap().put("JobInfo", jobInfo);
+			job.getJobDataMap().put("ZkClient", client);
+
+			this.scheduler.scheduleJob(job, trigger);
 		}
 	}
 
@@ -184,11 +236,11 @@ public class MasterNode extends LeaderSelectorListenerAdapter implements
 	private void scheduleJob(CuratorFramework client, JobInfo jobInfo)
 			throws SchedulerException {
 		if (EScheduleType.CRON == jobInfo.getScheduleType()) {
-			CronTrigger trigger = newTrigger().withIdentity(jobInfo.getName())
+			CronTrigger trigger = newTrigger().withIdentity(jobInfo.getId().toString())
 					.withSchedule(cronSchedule(jobInfo.getCron())).build();
 
 			JobDetail job = JobBuilder.newJob(DistributionJob.class)
-					.withIdentity(jobInfo.getName()).build();
+					.withIdentity(jobInfo.getId().toString()).build();
 			job.getJobDataMap().put("TaskNodes", this.taskNodes);
 			job.getJobDataMap().put("AllocationAlgorithm", this.allocAlgori);
 			job.getJobDataMap().put("JobInfo", jobInfo);

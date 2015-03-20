@@ -70,5 +70,9 @@ public class ZK {
 		ZkUtils.setData(client, "/mps/job/job1/info", j);
 		ZkUtils.setData(client, "/mps/job/job2/info", j2);
 		ZkUtils.setData(client, "/mps/job/job3/info", j3);
+
+		ZkUtils.setData(client,"/mps/job/job1/content","I'm job1");
+		ZkUtils.setData(client,"/mps/job/job2/content","I'm job2");
+		ZkUtils.setData(client,"/mps/job/job3/content","I'm job3");
 	}
 }

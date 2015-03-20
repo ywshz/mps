@@ -208,6 +208,8 @@ public class Worker implements Runnable {
 			ZkUtils.setData(zkClient, Constants.JOB_LOGS
 					+ Constants.ZK_SEPARATOR + jobId + Constants.ZK_SEPARATOR
 					+ "status", EJobRunStatus.SUCCESS);
+
+			ZkUtils.setData(zkClient, Constants.RUNNING_JOB_PATH + Constants.ZK_SEPARATOR + jobId, Constants.SUCCESS);
 		} else {
 			log(jobId, "Job Run Failed");
 
@@ -217,6 +219,8 @@ public class Worker implements Runnable {
 			ZkUtils.setData(zkClient, Constants.JOB_LOGS
 					+ Constants.ZK_SEPARATOR + jobId + Constants.ZK_SEPARATOR
 					+ "status", EJobRunStatus.FAILED);
+
+			ZkUtils.setData(zkClient, Constants.RUNNING_JOB_PATH + Constants.ZK_SEPARATOR + jobId, Constants.FAILED);
 		}
 	}
 
@@ -262,5 +266,7 @@ public class Worker implements Runnable {
 		ZkUtils.setData(zkClient, Constants.JOB_LOGS + Constants.ZK_SEPARATOR
 				+ jobId + Constants.ZK_SEPARATOR + "status",
 				EJobRunStatus.FAILED);
+
+		ZkUtils.setData(zkClient, Constants.RUNNING_JOB_PATH + Constants.ZK_SEPARATOR + jobId, Constants.FAILED);
 	}
 }

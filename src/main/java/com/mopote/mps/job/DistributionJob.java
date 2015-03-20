@@ -95,8 +95,11 @@ public class DistributionJob implements MpsJob {
 
                 String basePath = Constants.RUNNING_JOB_PATH
                         + Constants.ZK_SEPARATOR + jobInfo.getLogId();
+                ZkUtils.setData(client, basePath+Constants.ZK_SEPARATOR + "jobId", jobInfo.getId());
                 ZkUtils.setData(client, basePath+Constants.ZK_SEPARATOR + "target", target.getTaskNodeInfo());
                 ZkUtils.setData(client, basePath+Constants.ZK_SEPARATOR + "startTime", System.currentTimeMillis());
+                ZkUtils.setData(client, basePath, Constants.RUNNING);
+                break;
             } catch (InterruptedException e) {
                 logger.info("目标:{} 无法连接:{},重新选举目标", target.getTaskNodeInfo().getIp(), e.getMessage());
                 continue;
