@@ -80,9 +80,9 @@ public class Worker implements Runnable {
 
 	private void cleanup(JobInfo job) {
 		ZkUtils.delete(zkClient, Constants.RUNNING_JOB_PATH
-				+ Constants.ZK_SEPARATOR + job.getId());
+				+ Constants.ZK_SEPARATOR + job.getLogId());
 
-		File folder = new File(WORK_FOLDER + File.separator + job.getId());
+		File folder = new File(WORK_FOLDER + File.separator + job.getLogId());
 		// 因为folder下都是file, 不会再有folder, 可直接遍历删除
 		for (File file : folder.listFiles()) {
 			file.delete();
@@ -94,19 +94,19 @@ public class Worker implements Runnable {
 		// 在本地建立运行目录
 		String runFolderAbsPath = createRunFolder(job);
 		// 从ZK中得到脚本
-		String script = ZkUtils.getData(zkClient, job.getName()
-				+ Constants.JOB_CONTENT);
+		String jobRealPath = ZkUtils.getData(zkClient, Constants.JOB_ID_PATH_MAPPING + Constants.ZK_SEPARATOR + job.getId());
+		String script = ZkUtils.getData(zkClient, jobRealPath + Constants.JOB_CONTENT);
 		// 把脚本写入工作目录中
 		String runFileAbsPath = null;
 		try {
 			runFileAbsPath = createJobFiles(job, script, runFolderAbsPath);
 		} catch (IOException e) {
-			error(job.getId(), "创建脚本文件失败:" + e.getMessage());
+			error(job.getLogId(), "创建脚本文件失败:" + e.getMessage());
 			return;
 		}
 
-		log(job.getId(), "开始执行脚本:");
-		log(job.getId(), script);
+		log(job.getLogId(), "开始执行脚本:");
+		log(job.getLogId(), script);
 
 		ProcessBuilder builder = null;
 		switch (job.getJobType()) {
@@ -123,15 +123,15 @@ public class Worker implements Runnable {
 			break;
 		}
 
-		backgroundWorking(builder, job.getId());
+		backgroundWorking(builder, job.getLogId());
 	}
 
-	private void backgroundWorking(ProcessBuilder builder, final Long jobId) {
+	private void backgroundWorking(ProcessBuilder builder, final Long logId) {
 		Process process = null;
 		try {
 			process = builder.start();
 		} catch (IOException e) {
-			error(jobId, "执行环境启动失败:" + e.getMessage());
+			error(logId, "执行环境启动失败:" + e.getMessage());
 			return;
 		}
 
@@ -148,9 +148,9 @@ public class Worker implements Runnable {
 					while ((line = br.readLine()) != null) {
 						int curr = lineCount.getAndIncrement();
 						if (curr < MAX_STORE_LINES) {
-							log(jobId, line);
+							log(logId, line);
 						} else if (curr == MAX_STORE_LINES) {
-							log(jobId, "该任务LOG已有1万条,为减少内存占用,停止记录");
+							log(logId, "该任务LOG已有1万条,为减少内存占用,停止记录");
 						}
 					}
 				} catch (IOException ioE) {
@@ -169,9 +169,9 @@ public class Worker implements Runnable {
 					while ((line = br.readLine()) != null) {
 						int curr = lineCount.getAndIncrement();
 						if (curr < MAX_STORE_LINES) {
-							log(jobId, line);
+							log(logId, line);
 						} else if (curr == MAX_STORE_LINES) {
-							log(jobId, "该任务LOG已有1万条,为减少内存占用,停止记录");
+							log(logId, "该任务LOG已有1万条,为减少内存占用,停止记录");
 						}
 					}
 				} catch (IOException ioE) {
@@ -201,26 +201,26 @@ public class Worker implements Runnable {
 		}
 
 		if (exitCode == 0) {
-			log(jobId, "Job Run Success");
+			log(logId, "Job Run Success");
 			ZkUtils.setData(zkClient, Constants.JOB_LOGS
-					+ Constants.ZK_SEPARATOR + jobId + Constants.ZK_SEPARATOR
+					+ Constants.ZK_SEPARATOR + logId + Constants.ZK_SEPARATOR
 					+ "endTime", System.currentTimeMillis());
 			ZkUtils.setData(zkClient, Constants.JOB_LOGS
-					+ Constants.ZK_SEPARATOR + jobId + Constants.ZK_SEPARATOR
+					+ Constants.ZK_SEPARATOR + logId + Constants.ZK_SEPARATOR
 					+ "status", EJobRunStatus.SUCCESS);
 
-			ZkUtils.setData(zkClient, Constants.RUNNING_JOB_PATH + Constants.ZK_SEPARATOR + jobId, Constants.SUCCESS);
+			ZkUtils.setStringData(zkClient, Constants.RUNNING_JOB_PATH + Constants.ZK_SEPARATOR + logId, Constants.SUCCESS);
 		} else {
-			log(jobId, "Job Run Failed");
+			log(logId, "Job Run Failed");
 
 			ZkUtils.setData(zkClient, Constants.JOB_LOGS
-					+ Constants.ZK_SEPARATOR + jobId + Constants.ZK_SEPARATOR
+					+ Constants.ZK_SEPARATOR + logId + Constants.ZK_SEPARATOR
 					+ "endTime", System.currentTimeMillis());
 			ZkUtils.setData(zkClient, Constants.JOB_LOGS
-					+ Constants.ZK_SEPARATOR + jobId + Constants.ZK_SEPARATOR
+					+ Constants.ZK_SEPARATOR + logId + Constants.ZK_SEPARATOR
 					+ "status", EJobRunStatus.FAILED);
 
-			ZkUtils.setData(zkClient, Constants.RUNNING_JOB_PATH + Constants.ZK_SEPARATOR + jobId, Constants.FAILED);
+			ZkUtils.setStringData(zkClient, Constants.RUNNING_JOB_PATH + Constants.ZK_SEPARATOR + logId, Constants.FAILED);
 		}
 	}
 
@@ -228,7 +228,7 @@ public class Worker implements Runnable {
 			String runFolderAbsPath) throws IOException {
 		File file = null;
 		script = DateRender.render(script);
-		file = new File(runFolderAbsPath + File.separator + job.getId()
+		file = new File(runFolderAbsPath + File.separator + job.getLogId()
 				+ ".bat");
 		file.createNewFile();
 		file.setExecutable(true);
@@ -242,31 +242,31 @@ public class Worker implements Runnable {
 	}
 
 	private String createRunFolder(JobInfo job) {
-		File folder = new File(WORK_FOLDER + File.separator + job.getId());
+		File folder = new File(WORK_FOLDER + File.separator + job.getLogId());
 		folder.mkdirs();
 		return folder.getAbsolutePath();
 	}
 
-	private void log(Long jobId, String newLog) {
+	private void log(Long logId, String newLog) {
 		String old = ZkUtils.getData(this.zkClient, Constants.JOB_LOGS
-				+ Constants.ZK_SEPARATOR + jobId + Constants.ZK_SEPARATOR
+				+ Constants.ZK_SEPARATOR + logId + Constants.ZK_SEPARATOR
 				+ "log");
 		ZkUtils.setStringData(zkClient, Constants.JOB_LOGS
-				+ Constants.ZK_SEPARATOR + jobId + Constants.ZK_SEPARATOR
+				+ Constants.ZK_SEPARATOR + logId + Constants.ZK_SEPARATOR
 				+ "log", old + newLog + "/n");
 	}
 
-	private void error(Long jobId, String msg) {
-		log(jobId, msg);
-		log(jobId, "Job Run Failed");
+	private void error(Long logId, String msg) {
+		log(logId, msg);
+		log(logId, "Job Run Failed");
 
 		ZkUtils.setData(zkClient, Constants.JOB_LOGS + Constants.ZK_SEPARATOR
-				+ jobId + Constants.ZK_SEPARATOR + "endTime",
+				+ logId + Constants.ZK_SEPARATOR + "endTime",
 				System.currentTimeMillis());
 		ZkUtils.setData(zkClient, Constants.JOB_LOGS + Constants.ZK_SEPARATOR
-				+ jobId + Constants.ZK_SEPARATOR + "status",
+				+ logId + Constants.ZK_SEPARATOR + "status",
 				EJobRunStatus.FAILED);
 
-		ZkUtils.setData(zkClient, Constants.RUNNING_JOB_PATH + Constants.ZK_SEPARATOR + jobId, Constants.FAILED);
+		ZkUtils.setStringData(zkClient, Constants.RUNNING_JOB_PATH + Constants.ZK_SEPARATOR + logId, Constants.FAILED);
 	}
 }

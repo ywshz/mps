@@ -42,7 +42,12 @@ public class ZK {
 //			j.setJobType(EJobType.SHELL);
 //			ZkUtils.setData(client, "/mps/job/"+jobName+"/info", j);
 //		}
-		
+		ZkUtils.create(client, Constants.RUNNING_JOB_PATH);
+		ZkUtils.create(client, Constants.DEPENDENCY_LISTENER);
+		ZkUtils.create(client, Constants.LEADER_SELECTOR_PATH);
+		ZkUtils.create(client, Constants.DEPENDENCY_TREE);
+
+
 		JobInfo j = new JobInfo();
 		j.setId(1L);
 		j.setName("job1");
@@ -54,7 +59,7 @@ public class ZK {
 		JobInfo j2 = new JobInfo();
 		j2.setId(2L);
 		j2.setName("job2");
-		j2.setCron("*/10 * * * * ?");
+		j2.setCron("0 */1 * * * ?");
 		j2.setScheduleType(EScheduleType.CRON);
 		j2.setScheduleStatus(EScheduleStatus.ON);
 		j2.setJobType(EJobType.SHELL);
@@ -62,7 +67,7 @@ public class ZK {
 		JobInfo j3 = new JobInfo();
 		j3.setId(3L);
 		j3.setName("job3");
-		j3.setCron("*/20 * * * * ?");
+		j3.setCron("*/30 * * * * ?");
 		j3.setScheduleType(EScheduleType.CRON);
 		j3.setScheduleStatus(EScheduleStatus.ON);
 		j3.setJobType(EJobType.SHELL);
@@ -71,8 +76,17 @@ public class ZK {
 		ZkUtils.setData(client, "/mps/job/job2/info", j2);
 		ZkUtils.setData(client, "/mps/job/job3/info", j3);
 
-		ZkUtils.setData(client,"/mps/job/job1/content","I'm job1");
-		ZkUtils.setData(client,"/mps/job/job2/content","I'm job2");
-		ZkUtils.setData(client,"/mps/job/job3/content","I'm job3");
+		ZkUtils.setStringData(client, "/mps/job/job1/content", "echo job1");
+		ZkUtils.setStringData(client, "/mps/job/job2/content", "echo job2");
+		ZkUtils.setStringData(client, "/mps/job/job3/content", "echo job3");
+
+		ZkUtils.setStringData(client, "/mps/job/job1", "file");
+		ZkUtils.setStringData(client, "/mps/job/job2", "file");
+		ZkUtils.setStringData(client, "/mps/job/job3", "file");
+
+		ZkUtils.setStringData(client, "/mps/job_path_mapping/1", "/mps/job/job1");
+		ZkUtils.setStringData(client, "/mps/job_path_mapping/2", "/mps/job/job2");
+		ZkUtils.setStringData(client, "/mps/job_path_mapping/3", "/mps/job/job3");
+
 	}
 }

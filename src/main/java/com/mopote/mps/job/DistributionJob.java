@@ -98,7 +98,7 @@ public class DistributionJob implements MpsJob {
                 ZkUtils.setData(client, basePath+Constants.ZK_SEPARATOR + "jobId", jobInfo.getId());
                 ZkUtils.setData(client, basePath+Constants.ZK_SEPARATOR + "target", target.getTaskNodeInfo());
                 ZkUtils.setData(client, basePath+Constants.ZK_SEPARATOR + "startTime", System.currentTimeMillis());
-                ZkUtils.setData(client, basePath, Constants.RUNNING);
+                ZkUtils.setStringData(client, basePath, Constants.RUNNING);
                 break;
             } catch (InterruptedException e) {
                 logger.info("目标:{} 无法连接:{},重新选举目标", target.getTaskNodeInfo().getIp(), e.getMessage());
@@ -126,7 +126,7 @@ public class DistributionJob implements MpsJob {
         //save job's log, like : /mps/job_logs/job.Id/job.LogId,
         String logPath = Constants.JOB_LOGS + Constants.ZK_SEPARATOR
                 + job.getId() + Constants.ZK_SEPARATOR
-                + job.getId();
+                + job.getLogId();
         ZkUtils.create(client, logPath);
         ZkUtils.setData(client, logPath + Constants.ZK_SEPARATOR + "startTime", System.currentTimeMillis());
         ZkUtils.create(client, logPath + Constants.ZK_SEPARATOR + "endTime");
@@ -138,7 +138,7 @@ public class DistributionJob implements MpsJob {
     private void jobFailed(CuratorFramework client, JobInfo job, String msg) {
         String logPath = Constants.JOB_LOGS + Constants.ZK_SEPARATOR
                 + job.getId() + Constants.ZK_SEPARATOR
-                + job.getId();
+                + job.getLogId();
 
         ZkUtils.setStringData(client, logPath + Constants.ZK_SEPARATOR + "log",
                 msg + "/nJob Run Failed/n");
@@ -147,5 +147,9 @@ public class DistributionJob implements MpsJob {
                 System.currentTimeMillis());
 
         ZkUtils.setData(client, logPath + Constants.ZK_SEPARATOR + "status", EJobRunStatus.FAILED);
+
+        String basePath = Constants.RUNNING_JOB_PATH
+                + Constants.ZK_SEPARATOR + job.getLogId();
+        ZkUtils.setStringData(client, basePath, Constants.FAILED);
     }
 }

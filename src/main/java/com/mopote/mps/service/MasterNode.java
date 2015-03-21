@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import com.mopote.mps.enums.EJobRunStatus;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
@@ -103,8 +104,10 @@ public class MasterNode extends LeaderSelectorListenerAdapter implements
 		final int waitSeconds = 3;
 		logger.info("{} 获得了 Leader 位置, 开始执政.", this.name);
 		try {
+			logger.info("启动任务监视器");
 			startRunningJobListner(client);
 			// 启动调度器
+			logger.info("启动调度器");
 			this.scheduler.start();
 			// 保持占有leader锁
 			while (true) {
@@ -127,17 +130,30 @@ public class MasterNode extends LeaderSelectorListenerAdapter implements
 			@Override
 			public void run() {
 				while(true){
+					logger.info("开始任务检查.");
 					List<String> runningJobs = ZkUtils.getChildren(client, Constants.RUNNING_JOB_PATH);
 					for(String jobStr : runningJobs){
 						String path = Constants.RUNNING_JOB_PATH + Constants.ZK_SEPARATOR + jobStr;
 						String value = ZkUtils.getData(client, path);
 						if(Constants.RUNNING.equals(value)){
-							//TODO: 检查任务超时
+							if( checkRunningJobTimeout(client,path) ){
+								//set job failed
+								failedJob(client, path, jobStr);
+							}
 						}else if(Constants.SUCCESS.equals(value)){
-							//TODO: 检查依赖
 							checkDependency(client,path);
+							//remove running log
+							ZkUtils.delete(client,path + "/jobId");
+							ZkUtils.delete(client,path + "/startTime");
+							ZkUtils.delete(client,path + "/target");
+							ZkUtils.delete(client,path );
 						}else if(Constants.FAILED.equals(value)){
 							//TODO: 任务失败后续处理，如发邮件
+
+							ZkUtils.delete(client,path + "/jobId");
+							ZkUtils.delete(client,path + "/startTime");
+							ZkUtils.delete(client,path + "/target");
+							ZkUtils.delete(client,path );
 						}
 					}
 
@@ -151,13 +167,39 @@ public class MasterNode extends LeaderSelectorListenerAdapter implements
 		listener.start();
 	}
 
+	private void failedJob(CuratorFramework client, String path, String logId) {
+		//TODO: KILL JOB PROCESS WHEN TIMEOUT EXCEPTION OCCUR
+		String jobId = ZkUtils.getData(client,path + "/jobId");
+
+		String logPath = Constants.JOB_LOGS + Constants.ZK_SEPARATOR
+				+ jobId + Constants.ZK_SEPARATOR
+				+ logId;
+
+		ZkUtils.setStringData(client, logPath + Constants.ZK_SEPARATOR + "log",
+				"任务运行超时， MAX="+Constants.JOB_TIME_OUT_MILLIS + "/nJob Run Failed/n");
+
+		ZkUtils.setData(client, logPath + Constants.ZK_SEPARATOR + "endTime",
+				System.currentTimeMillis());
+
+		ZkUtils.setData(client, logPath + Constants.ZK_SEPARATOR + "status", EJobRunStatus.FAILED);
+
+		ZkUtils.setStringData(client, path, Constants.FAILED);
+	}
+
+	private boolean checkRunningJobTimeout(CuratorFramework client, String path) {
+		Long startTime = (Long)ZkUtils.getData(client,path + "/startTime",Long.class);
+		Long cost = System.currentTimeMillis()-startTime;
+		return cost>Constants.JOB_TIME_OUT_MILLIS;
+	}
+
 	private void checkDependency(CuratorFramework client, String path) {
-		String jobId = ZkUtils.getData(client,path);
+		String jobId = ZkUtils.getData(client,path + "/jobId");
 		List<String> notifyJobs = ZkUtils.getChildren(client,Constants.DEPENDENCY_LISTENER + Constants.ZK_SEPARATOR + jobId);
 		for(String job : notifyJobs){
 			ZkUtils.delete(client,Constants.DEPENDENCY_TREE + Constants.ZK_SEPARATOR + job + Constants.ZK_SEPARATOR + jobId);
 			if (ZkUtils.getChildren(client, Constants.DEPENDENCY_TREE + Constants.ZK_SEPARATOR + job).isEmpty()){
-				JobInfo jobInfo = (JobInfo)ZkUtils.getData(client, Constants.MPS_JOB+Constants.ZK_SEPARATOR+job + Constants.JOB_INFO ,JobInfo.class);
+				String realJobPath = ZkUtils.getData(client,Constants.JOB_ID_PATH_MAPPING + Constants.ZK_SEPARATOR + job);
+				JobInfo jobInfo = (JobInfo)ZkUtils.getData(client, realJobPath + Constants.JOB_INFO ,JobInfo.class);
 				// 触发依赖任务
 				try {
 					triggerJob(jobInfo, client);
@@ -169,7 +211,7 @@ public class MasterNode extends LeaderSelectorListenerAdapter implements
 				//build dependency tree and listener tree
 				for(String dependency : dependencies){
 					String np = Constants.DEPENDENCY_TREE + Constants.ZK_SEPARATOR + jobInfo.getId();
-					if(!ZkUtils.exist(client,np)){
+					if(!ZkUtils.exist(client,np+Constants.ZK_SEPARATOR+dependency)){
 						ZkUtils.create(client,np+Constants.ZK_SEPARATOR+dependency);
 					}
 				}
@@ -235,6 +277,7 @@ public class MasterNode extends LeaderSelectorListenerAdapter implements
 
 	private void scheduleJob(CuratorFramework client, JobInfo jobInfo)
 			throws SchedulerException {
+		logger.info("开始初始化：{}", jobInfo.getName());
 		if (EScheduleType.CRON == jobInfo.getScheduleType()) {
 			CronTrigger trigger = newTrigger().withIdentity(jobInfo.getId().toString())
 					.withSchedule(cronSchedule(jobInfo.getCron())).build();

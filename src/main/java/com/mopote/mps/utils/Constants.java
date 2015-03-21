@@ -30,4 +30,7 @@ public class Constants {
 	public static final String DEPENDENCY_TREE = "/mps/dependency_tree";
 
 	public static final String DEPENDENCY_LISTENER = "/mps/dependency_listener";
+
+	public static final String JOB_ID_PATH_MAPPING = "/mps/job_path_mapping";
+	public static final long JOB_TIME_OUT_MILLIS = 10800; //3 hours
 }
