@@ -12,6 +12,6 @@ public class BaseController {
 
     @RequestMapping("/index.do")
     public String index(){
-        return "index";
+        return "pages/index";
     }
 }

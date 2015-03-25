@@ -1,16 +1,16 @@
 package com.mopote.mps.service;
 
-import static org.quartz.CronScheduleBuilder.cronSchedule;
-import static org.quartz.TriggerBuilder.newTrigger;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-
+import com.google.gson.Gson;
+import com.mopote.mps.domain.FileInfo;
 import com.mopote.mps.enums.EJobRunStatus;
+import com.mopote.mps.enums.EScheduleStatus;
+import com.mopote.mps.enums.EScheduleType;
+import com.mopote.mps.job.AllocationAlgorithm;
+import com.mopote.mps.job.DistributionJob;
+import com.mopote.mps.job.JobInfo;
+import com.mopote.mps.job.RandomAllocationAlgorithm;
+import com.mopote.mps.utils.Constants;
+import com.mopote.mps.utils.ZkUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
@@ -25,15 +25,15 @@ import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-import com.mopote.mps.enums.EScheduleStatus;
-import com.mopote.mps.enums.EScheduleType;
-import com.mopote.mps.job.AllocationAlgorithm;
-import com.mopote.mps.job.DistributionJob;
-import com.mopote.mps.job.JobInfo;
-import com.mopote.mps.job.RandomAllocationAlgorithm;
-import com.mopote.mps.utils.Constants;
-import com.mopote.mps.utils.ZkUtils;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+
+import static org.quartz.CronScheduleBuilder.cronSchedule;
+import static org.quartz.TriggerBuilder.newTrigger;
 
 public class MasterNode extends LeaderSelectorListenerAdapter implements
 		Closeable {
@@ -262,7 +262,8 @@ public class MasterNode extends LeaderSelectorListenerAdapter implements
 		List<String> jobs = ZkUtils.getChildren(client, path);
 		for (String jobName : jobs) {
 			String fullPath = path + Constants.ZK_SEPARATOR + jobName;
-			if (Constants.FILE.equals(ZkUtils.getData(client, fullPath))) {
+            FileInfo fileInfo = (FileInfo)ZkUtils.getData(client, fullPath, FileInfo.class);
+			if (Constants.FILE.equals(fileInfo.getType())) {
 				JobInfo j = (JobInfo) ZkUtils.getData(client, fullPath
 						+ Constants.JOB_INFO, JobInfo.class);
 				j.setName(path + Constants.ZK_SEPARATOR + j.getName());

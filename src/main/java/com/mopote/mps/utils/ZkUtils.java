@@ -1,23 +1,16 @@
 package com.mopote.mps.utils;
 
-import java.lang.reflect.Type;
-import java.util.Collections;
-import java.util.List;
-
+import com.google.gson.*;
+import com.mopote.mps.enums.EScheduleStatus;
+import com.mopote.mps.enums.EnumSerializer;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializationContext;
-import com.mopote.mps.enums.EScheduleStatus;
-import com.mopote.mps.enums.EnumSerializer;
+import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.List;
 
 public class ZkUtils {
 	private static Gson gson;
@@ -43,7 +36,7 @@ public class ZkUtils {
 
 	public static CuratorFramework newZkClient() {
 		RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-		return CuratorFrameworkFactory.newClient("localhost:2181", retryPolicy);
+		return CuratorFrameworkFactory.newClient("172.16.3.145:2181", retryPolicy);
 	}
 
 	public static List<String> getChildren(CuratorFramework client, String path) {

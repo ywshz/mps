@@ -1,19 +1,15 @@
 package test;
 
-import java.util.List;
-
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
-import org.apache.curator.retry.RetryNTimes;
-
+import com.mopote.mps.domain.FileInfo;
 import com.mopote.mps.enums.EJobType;
 import com.mopote.mps.enums.EScheduleStatus;
 import com.mopote.mps.enums.EScheduleType;
 import com.mopote.mps.job.JobInfo;
-import com.mopote.mps.service.MasterNode;
-import com.mopote.mps.service.TaskNodeInfo;
 import com.mopote.mps.utils.Constants;
 import com.mopote.mps.utils.ZkUtils;
+import org.apache.curator.framework.CuratorFramework;
+
+import java.util.Date;
 
 public class ZK {
 
@@ -80,11 +76,11 @@ public class ZK {
 		ZkUtils.setStringData(client, "/mps/job/job2/content", "echo job2");
 		ZkUtils.setStringData(client, "/mps/job/job3/content", "echo job3");
 
-		ZkUtils.setStringData(client, "/mps/job/job1", "file");
-		ZkUtils.setStringData(client, "/mps/job/job2", "file");
-		ZkUtils.setStringData(client, "/mps/job/job3", "file");
+		ZkUtils.setData(client, "/mps/job/job1", new FileInfo("job1", new Date(), new Date(), "file"));
+		ZkUtils.setData(client, "/mps/job/job2", new FileInfo("job1",new Date(),new Date(),"file"));
+		ZkUtils.setData(client, "/mps/job/job3", new FileInfo("job1", new Date(), new Date(), "file"));
 
-		ZkUtils.setStringData(client, "/mps/job_path_mapping/1", "/mps/job/job1");
+        ZkUtils.setStringData(client, "/mps/job_path_mapping/1", "/mps/job/job1");
 		ZkUtils.setStringData(client, "/mps/job_path_mapping/2", "/mps/job/job2");
 		ZkUtils.setStringData(client, "/mps/job_path_mapping/3", "/mps/job/job3");
 

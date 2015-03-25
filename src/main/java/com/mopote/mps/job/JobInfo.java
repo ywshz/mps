@@ -1,11 +1,12 @@
 package com.mopote.mps.job;
 
-import java.io.Serializable;
-import java.util.List;
-
 import com.mopote.mps.enums.EJobType;
 import com.mopote.mps.enums.EScheduleStatus;
 import com.mopote.mps.enums.EScheduleType;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.util.List;
 
 public class JobInfo implements Serializable {
 
@@ -18,7 +19,10 @@ public class JobInfo implements Serializable {
 	private EScheduleStatus scheduleStatus;
 	private String cron;
 	private String dependency;
-	private transient List<String> logs;
+    private Date createTime;
+    private Date modifyTime;
+
+    private transient List<String> logs;
 
 	public JobInfo() {
 
@@ -34,11 +38,31 @@ public class JobInfo implements Serializable {
 		this.cron = cron;
 	}
 
-	public static long getSerialVersionUID() {
-		return serialVersionUID;
-	}
+    public JobInfo(String name, EJobType jobType, EScheduleType scheduleType, EScheduleStatus scheduleStatus, String cron, String dependency, Date createTime, Date modifyTime) {
+        this.name = name;
+        this.jobType = jobType;
+        this.scheduleType = scheduleType;
+        this.scheduleStatus = scheduleStatus;
+        this.cron = cron;
+        this.dependency = dependency;
+        this.createTime = createTime;
+        this.modifyTime = modifyTime;
+    }
 
-	public Long getLogId() {
+    public JobInfo(Long id, Long logId, String name, EJobType jobType, EScheduleType scheduleType, EScheduleStatus scheduleStatus, String cron, String dependency, Date createTime, Date modifyTime) {
+        this.id = id;
+        this.logId = logId;
+        this.name = name;
+        this.jobType = jobType;
+        this.scheduleType = scheduleType;
+        this.scheduleStatus = scheduleStatus;
+        this.cron = cron;
+        this.dependency = dependency;
+        this.createTime = createTime;
+        this.modifyTime = modifyTime;
+    }
+
+    public Long getLogId() {
 		return logId;
 	}
 
@@ -110,4 +134,19 @@ public class JobInfo implements Serializable {
 		this.id = id;
 	}
 
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    public Date getModifyTime() {
+        return modifyTime;
+    }
+
+    public void setModifyTime(Date modifyTime) {
+        this.modifyTime = modifyTime;
+    }
 }
