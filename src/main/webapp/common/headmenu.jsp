@@ -27,7 +27,7 @@ if(uri.contains("diaodu")){
 					<li class="active"><a href="${path}">盘古Pangu</a></li>
 					 -->
 				<li class="${page=='diaodu'?'active':'' }"><a
-					href="${path }/pages/diaodu.jsp">调度</a></li>
+					href="${path }/files/list.do">调度</a></li>
                 <li class="${page=='node_status'?'active':'' }"><a
                         href="${path }/pages/node_status.jsp">节点状态</a></li>
 			</ul>

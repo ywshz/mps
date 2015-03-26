@@ -76,9 +76,11 @@ public class ZK {
 		ZkUtils.setStringData(client, "/mps/job/job2/content", "echo job2");
 		ZkUtils.setStringData(client, "/mps/job/job3/content", "echo job3");
 
-		ZkUtils.setData(client, "/mps/job/job1", new FileInfo("job1", new Date(), new Date(), "file"));
-		ZkUtils.setData(client, "/mps/job/job2", new FileInfo("job1",new Date(),new Date(),"file"));
-		ZkUtils.setData(client, "/mps/job/job3", new FileInfo("job1", new Date(), new Date(), "file"));
+		ZkUtils.setData(client, "/mps/job/job1", new FileInfo("job1", EScheduleStatus.OFF, new Date(), new Date(), "file"));
+		ZkUtils.setData(client, "/mps/job/job2", new FileInfo("job2", EScheduleStatus.OFF, new Date(),new Date(),"file"));
+		ZkUtils.setData(client, "/mps/job/job3", new FileInfo("job3", EScheduleStatus.ON, new Date(), new Date(), "file"));
+        ZkUtils.setData(client, "/mps/job/folder1", new FileInfo("folder1", new Date(), new Date(), "folder"));
+        ZkUtils.setData(client, "/mps/job/folder1/folder2", new FileInfo("folder2", new Date(), new Date(), "folder"));
 
         ZkUtils.setStringData(client, "/mps/job_path_mapping/1", "/mps/job/job1");
 		ZkUtils.setStringData(client, "/mps/job_path_mapping/2", "/mps/job/job2");

@@ -1,10 +1,12 @@
 package com.mopote.mps.web;
 
+import com.mopote.mps.job.JobInfo;
 import com.mopote.mps.service.WebUIService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 /**
@@ -24,6 +26,14 @@ public class FileManagerController {
         }
         ModelAndView mv = new ModelAndView("pages/diaodu");
         mv.addObject("files",webService.list(parent));
+        mv.addObject("parent",parent);
         return mv;
+    }
+
+    @RequestMapping("/detail.do")
+    public @ResponseBody
+    JobInfo detail(String parent,String jobName){
+        JobInfo job = webService.getJobDetail(parent,jobName);
+        return job;
     }
 }

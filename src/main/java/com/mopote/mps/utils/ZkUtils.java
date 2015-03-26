@@ -114,7 +114,7 @@ public class ZkUtils {
 
 	public static boolean delete(CuratorFramework client, String path) {
 		try {
-			client.delete().forPath(path);
+			client.delete().deletingChildrenIfNeeded().forPath(path);
 			return true;
 		} catch (Exception e) {
 			return false;

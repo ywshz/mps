@@ -19,8 +19,10 @@ public class JobInfo implements Serializable {
 	private EScheduleStatus scheduleStatus;
 	private String cron;
 	private String dependency;
+	private String realDependency;
     private Date createTime;
     private Date modifyTime;
+    private String script;
 
     private transient List<String> logs;
 
@@ -133,6 +135,26 @@ public class JobInfo implements Serializable {
 	public void setId(Long id) {
 		this.id = id;
 	}
+
+    public static long getSerialVersionUID() {
+        return serialVersionUID;
+    }
+
+    public String getScript() {
+        return script;
+    }
+
+    public void setScript(String script) {
+        this.script = script;
+    }
+
+    public String getRealDependency() {
+        return realDependency;
+    }
+
+    public void setRealDependency(String realDependency) {
+        this.realDependency = realDependency;
+    }
 
     public Date getCreateTime() {
         return createTime;
