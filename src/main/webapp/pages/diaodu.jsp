@@ -190,8 +190,8 @@
                                     <input type="radio" name="scheduleType" id="radioSchedualByDependency" value="2">
                                     依赖
                                 </label>
+                                <input type="text" class="form-control" id="dependency" name="">
                                 <input type="text" class="form-control" id="real-dependency" name="dependencies">
-                                <input type="hidden" class="" id="dependency" name="">
                             </div>
                         </div>
                     </div>

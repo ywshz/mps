@@ -43,12 +43,22 @@ function detail(name){
             $("#radioSchedualByTime").prop("checked",true);
             $("#radioSchedualByDependency").prop("checked",false);
             $("#inputCron").val(data.cron);
+
+            $("#dependency").attr("readonly","");
+            $("#real-dependency").attr("readonly","");
+            $("#inputCron").removeAttr("readonly");
+            $("#dependency").val("");
+            $("#real-dependency").val("");
         } else {
             $("#radioSchedualByTime").prop("checked",false);
             $("#radioSchedualByDependency").prop("checked",true);
             $("#dependency").val(data.dependency);
             $("#real-dependency").val(data.realDependency);
 
+            $("#dependency").removeAttr("readonly");
+            $("#real-dependency").removeAttr("readonly");
+            $("#inputCron").attr("readonly","");
+            $("#inputCron").val("");
         }
         editor.setValue(data.script==null?"":data.script);
 
