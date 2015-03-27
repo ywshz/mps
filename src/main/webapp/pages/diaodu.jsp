@@ -80,8 +80,8 @@
         </div>
 
         <div class="col-md-6 text-right">
-            <button class="btn btn-primary" type="submit">添加任务</button>
-            <button class="btn btn-default" type="submit">添加目录</button>
+            <button class="btn btn-primary" type="submit" id="add-task-btn">添加任务</button>
+            <button class="btn btn-default" type="submit" id="add-group-btn">添加目录</button>
         </div>
     </div>
     <div class="row">
@@ -210,7 +210,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
-                <button type="button" class="btn btn-primary">保存</button>
+                <button type="button" class="btn btn-primary" id="save-task-btn">保存</button>
             </div>
         </div>
         <!-- /.modal-content -->
@@ -219,7 +219,38 @@
 </div>
 <!-- /.modal -->
 
-<form action="" id="refresh-form" method="post">
+<div class="modal fade" id="add-group-modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">添加任务组</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" role="form" action="${path }/files/add-group.do" method="post" id="add-group-form">
+                    <div class="form-group">
+                        <label for="inputName" class="col-sm-2 control-label">名称</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="inputGroupName" name="name" value="" placeholder="一旦创建,无法修改...">
+                            <input type="hidden" class="form-control" name="parent" value="${parent}">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="save-group-btn">保存</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
+
+
+<form action="${path}/files/list.do" id="refresh-form" method="post">
     <input type="hidden" name="parent" value="${parent}" id="parent-input">
 </form>
 <!-- Bootstrap core JavaScript

@@ -38,6 +38,9 @@ public class ZK {
 //			j.setJobType(EJobType.SHELL);
 //			ZkUtils.setData(client, "/mps/job/"+jobName+"/info", j);
 //		}
+
+        ZkUtils.delete(client,"/mps/job");
+
 		ZkUtils.create(client, Constants.RUNNING_JOB_PATH);
 		ZkUtils.create(client, Constants.DEPENDENCY_LISTENER);
 		ZkUtils.create(client, Constants.LEADER_SELECTOR_PATH);

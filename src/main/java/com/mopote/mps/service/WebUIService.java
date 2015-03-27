@@ -10,10 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by wangshu.yang on 2015/3/25.
@@ -62,5 +59,13 @@ public class WebUIService {
         String ct = ZkUtils.getData(client,Constants.MPS_JOB + parent +jobName+Constants.JOB_CONTENT);
         jobInfo.setScript(ct);
         return jobInfo;
+    }
+
+    public void addFolder(String parent, String name){
+        ZkUtils.setData(client,Constants.MPS_JOB + parent + Constants.ZK_SEPARATOR +name, new FileInfo(name,new Date(),new Date(), Constants.FOLDER));
+    }
+
+    public void addTask(String parent, JobInfo jobInfo){
+
     }
 }

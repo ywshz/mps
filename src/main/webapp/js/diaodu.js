@@ -3,35 +3,104 @@
  */
 $(document).ready(main());
 var editor
-function main(){
+function main() {
+    initButtons();
     initEditor();
 }
 
-function initEditor(){
+function initButtons() {
+    $("#add-task-btn").click(function(){
+        viewAddTask();
+    });
+
+    $("#add-group-btn").click(function(){
+        viewAddGroup();
+    });
+
+    $("#save-group-btn").click(function(){
+        saveGroup();
+    });
+
+    $("#save-task-btn").click(function(){
+        saveOrUpdateTask();
+    });
+}
+
+
+function initEditor() {
     editor = CodeMirror.fromTextArea(document.getElementById("edit-script"), {
-        lineNumbers : true,
-        mode : 'text/x-hive',
-        indentWithTabs : true,
-        smartIndent : true,
-        matchBrackets : true,
-        autofocus : true,
+        lineNumbers: true,
+        mode: 'text/x-hive',
+        indentWithTabs: true,
+        smartIndent: true,
+        matchBrackets: true,
+        autofocus: true,
         width: '100%',
         height: '400px'
     });
 
 }
 
-function enter(parent){
+function viewAddTask() {
+    $('#detail-modal').modal({
+        keyboard: false,
+        backdrop: 'static',
+        show: true
+    });
+
+    $("#inputID").val("");
+    $("#inputName").val("");
+    $("#inputScheduleType").val("SHELL");
+
+    $("#radioSchedualByTime").prop("checked", true);
+    $("#radioSchedualByDependency").prop("checked", false);
+    $("#inputCron").val("0 0 0 * * * ?");
+
+    $("#dependency").val("");
+    $("#real-dependency").val("");
+    editor.setValue("script here");
+
+    //从隐藏层显示,需要延迟刷新,否则仍无法正常显示
+    setTimeout(function () {
+        editor.refresh();
+    }, 200);
+}
+
+function viewAddGroup(){
+    $('#add-group-modal').modal({
+        keyboard: false,
+        backdrop: 'static',
+        show: true
+    });
+}
+
+function saveOrUpdateTask(){
+    if($("#inputID").val() == "" ){
+        $.post(BASE_APTH+"/files/");
+    }else{
+        $.post();
+    }
+}
+
+function saveGroup(){
+    if($("#inputGroupName").val().trim() == '' ){
+        alert("名字不能为空");
+    }else{
+        $("#add-group-form").submit();
+    }
+}
+
+function enter(parent) {
     $("#parent-input").val(parent);
     $("#refresh-form").submit();
 }
 
-function detail(name){
-    $.post(BASE_PATH + "/files/detail.do",{jobName:name, parent:$("#parent-input").val()},function(data){
+function detail(name) {
+    $.post(BASE_PATH + "/files/detail.do", {jobName: name, parent: $("#parent-input").val()}, function (data) {
         $('#detail-modal').modal({
             keyboard: false,
             backdrop: 'static',
-            show : true
+            show: true
         });
 
 
@@ -40,32 +109,26 @@ function detail(name){
         $("#inputScheduleType").val(data.jobType);
 
         if (data.scheduleType == "CRON") {
-            $("#radioSchedualByTime").prop("checked",true);
-            $("#radioSchedualByDependency").prop("checked",false);
+            $("#radioSchedualByTime").prop("checked", true);
+            $("#radioSchedualByDependency").prop("checked", false);
             $("#inputCron").val(data.cron);
 
-            $("#dependency").attr("readonly","");
-            $("#real-dependency").attr("readonly","");
-            $("#inputCron").removeAttr("readonly");
             $("#dependency").val("");
             $("#real-dependency").val("");
         } else {
-            $("#radioSchedualByTime").prop("checked",false);
-            $("#radioSchedualByDependency").prop("checked",true);
+            $("#radioSchedualByTime").prop("checked", false);
+            $("#radioSchedualByDependency").prop("checked", true);
             $("#dependency").val(data.dependency);
             $("#real-dependency").val(data.realDependency);
 
-            $("#dependency").removeAttr("readonly");
-            $("#real-dependency").removeAttr("readonly");
-            $("#inputCron").attr("readonly","");
             $("#inputCron").val("");
         }
-        editor.setValue(data.script==null?"":data.script);
+        editor.setValue(data.script == null ? "" : data.script);
 
         //从隐藏层显示,需要延迟刷新,否则仍无法正常显示
-        setTimeout(function(){
+        setTimeout(function () {
             editor.refresh();
-        },200);
+        }, 200);
 
 
     });

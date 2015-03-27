@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * Created by wangshu.yang on 2015/3/24.
  */
@@ -35,5 +37,19 @@ public class FileManagerController {
     JobInfo detail(String parent,String jobName){
         JobInfo job = webService.getJobDetail(parent,jobName);
         return job;
+    }
+
+    @RequestMapping("/add-group.do")
+    public String addGroup(String parent,String name,HttpServletRequest request){
+        webService.addFolder(parent, name);
+        request.setAttribute("parent",parent);
+        return "forward:/files/list.do";
+    }
+
+    @RequestMapping("/save-update-task.do")
+    public String saveUpdateTask(String parent,String name,JobInfo jobInfo, HttpServletRequest request){
+        
+        request.setAttribute("parent",parent);
+        return "forward:/files/list.do";
     }
 }
