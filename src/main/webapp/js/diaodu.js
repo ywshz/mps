@@ -24,6 +24,7 @@ function initButtons() {
     $("#save-task-btn").click(function(){
         saveOrUpdateTask();
     });
+
 }
 
 
@@ -50,6 +51,7 @@ function viewAddTask() {
 
     $("#inputID").val("");
     $("#inputName").val("");
+    $("#inputName").removeAttr("readonly");
     $("#inputScheduleType").val("SHELL");
 
     $("#radioSchedualByTime").prop("checked", true);
@@ -75,11 +77,42 @@ function viewAddGroup(){
 }
 
 function saveOrUpdateTask(){
-    if($("#inputID").val() == "" ){
-        $.post(BASE_APTH+"/files/");
+    var name= $("#inputName").val();
+    var jobType= $("#inputJobType").val();
+    var scheduleType;
+    var cron,dependency;
+    if(document.getElementById('radioSchedualByTime').checked){
+        //cron,dependency
+        scheduleType= 'CRON';
+        cron = $("#inputCron").val();
     }else{
-        $.post();
+        scheduleType= 'DEPENDENCY';
+        dependency = $("#dependency").val();
     }
+    var script= editor.getValue();
+
+    if($("#inputID").val() == "" ){
+        $.post(BASE_PATH+"/files/save-update-task.do",{parent: $("#parent-input").val() ,name:name,jobType:jobType,scheduleType:scheduleType,cron:cron,dependency:dependency,script:script},function(data){
+            if(data.code==200) {
+                alert("修改成功");
+                $("#refresh-form").submit();
+            } else{
+                alert("修改失败,请重试!");
+            }
+        });
+    }else{
+
+        $.post(BASE_PATH+"/files/save-update-task.do",{id:$("#inputID").val()  ,parent: $("#parent-input").val() ,name:name ,jobType:jobType,scheduleType:scheduleType,cron:cron,dependency:dependency,script:script},function(data){
+            if(data.code==200) {
+                alert("修改成功");
+                $("#refresh-form").submit();
+            } else{
+                alert("修改失败,请重试!");
+            }
+        });
+    }
+
+
 }
 
 function saveGroup(){
@@ -106,8 +139,9 @@ function detail(name) {
 
         $("#inputID").val(data.id);
         $("#inputName").val(data.name);
-        $("#inputScheduleType").val(data.jobType);
-
+        $("#inputName").attr("readonly","");
+        //$("#inputScheduleType").val(data.jobType);
+        $("#inputJobType option[value="+data.jobType+"]").attr("selected", true);
         if (data.scheduleType == "CRON") {
             $("#radioSchedualByTime").prop("checked", true);
             $("#radioSchedualByDependency").prop("checked", false);
@@ -129,8 +163,27 @@ function detail(name) {
         setTimeout(function () {
             editor.refresh();
         }, 200);
-
-
     });
+}
 
+function deleteTask(name){
+    $.post(BASE_PATH+"/files/delete-task.do",{parent: $("#parent-input").val() ,name: name},function(data){
+        if(data.code==200) {
+            alert("操作成功");
+            $("#refresh-form").submit();
+        } else{
+            alert("操作失败,请重试!");
+        }
+    });
+}
+
+function startOrStop(){
+    $.post(BASE_PATH+"/files/start-or-stop.do",{parent: $("#parent-input").val() ,name: name},function(data){
+        if(data.code==200) {
+            alert("操作成功");
+            $("#refresh-form").submit();
+        } else{
+            alert("操作失败,请重试!");
+        }
+    });
 }

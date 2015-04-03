@@ -1,6 +1,7 @@
 package com.mopote.mps.service;
 
 import com.mopote.mps.domain.FileInfo;
+import com.mopote.mps.enums.EScheduleStatus;
 import com.mopote.mps.enums.EScheduleType;
 import com.mopote.mps.job.JobInfo;
 import com.mopote.mps.utils.Constants;
@@ -50,8 +51,13 @@ public class WebUIService {
             String real_dependency= "";
             for(String dependency : jobInfo.getDependency().split(",")){
                 String path =  ZkUtils.getData(client,Constants.JOB_ID_PATH_MAPPING + "/" + dependency);
-                path = path.replaceFirst(Constants.MPS_JOB,"");
-                real_dependency+= path + ",";
+                if(path == null){
+                    real_dependency+= "UnKnown,";
+                }else{
+                    path = path.replaceFirst(Constants.MPS_JOB,"");
+                    real_dependency+= path + ",";
+                }
+
             }
             real_dependency=real_dependency.substring(0, real_dependency.lastIndexOf(","));
             jobInfo.setRealDependency(real_dependency);
@@ -65,7 +71,40 @@ public class WebUIService {
         ZkUtils.setData(client,Constants.MPS_JOB + parent + Constants.ZK_SEPARATOR +name, new FileInfo(name,new Date(),new Date(), Constants.FOLDER));
     }
 
-    public void addTask(String parent, JobInfo jobInfo){
+    public boolean checkExist(String parent,String name){
+        return ZkUtils.exist(client,Constants.MPS_JOB + parent + Constants.ZK_SEPARATOR +name);
+    }
 
+    public void addTask(String parent, JobInfo jobInfo){
+        jobInfo.setId(ZkUtils.generateNewId(client));
+        ZkUtils.setData(client, Constants.MPS_JOB + parent + Constants.ZK_SEPARATOR + jobInfo.getName(), new FileInfo(jobInfo.getName(), new Date(), new Date(), Constants.FILE));
+        ZkUtils.setData(client,Constants.MPS_JOB + parent + Constants.ZK_SEPARATOR +jobInfo.getName() + Constants.JOB_INFO, jobInfo);
+        ZkUtils.setStringData(client, Constants.MPS_JOB + parent + Constants.ZK_SEPARATOR + jobInfo.getName() + Constants.JOB_CONTENT, jobInfo.getScript());
+        ZkUtils.setStringData(client, Constants.JOB_ID_PATH_MAPPING + "/" + jobInfo.getId(), Constants.MPS_JOB + parent + Constants.ZK_SEPARATOR + jobInfo.getName());
+    }
+
+    public void updateTask(String parent, JobInfo jobInfo) {
+        FileInfo fileInfo = (FileInfo) ZkUtils.getData(client,Constants.MPS_JOB + parent + Constants.ZK_SEPARATOR +jobInfo.getName(),FileInfo.class);
+        fileInfo.setModifyTime(new Date());
+        ZkUtils.setData(client, Constants.MPS_JOB + parent + Constants.ZK_SEPARATOR + jobInfo.getName(), fileInfo);
+        ZkUtils.setData(client,Constants.MPS_JOB + parent + Constants.ZK_SEPARATOR +jobInfo.getName() + Constants.JOB_INFO, jobInfo);
+        ZkUtils.setStringData(client, Constants.MPS_JOB + parent + Constants.ZK_SEPARATOR + jobInfo.getName() + Constants.JOB_CONTENT, jobInfo.getScript());
+    }
+
+    public void delete(String parent, String name) {
+        JobInfo job = (JobInfo) ZkUtils.getData(client, Constants.MPS_JOB + parent + name + Constants.JOB_INFO, JobInfo.class);
+        ZkUtils.delete(client, Constants.MPS_JOB + parent +name);
+        if(job!=null) ZkUtils.delete(client, Constants.JOB_ID_PATH_MAPPING + "/" + job.getId());
+    }
+
+    public void startOrStop(String parent, String name) {
+        FileInfo info = (FileInfo) ZkUtils.getData(client,Constants.MPS_JOB + parent + name,FileInfo.class);
+        if( EScheduleStatus.ON==info.getStatus() ){
+            info.setStatus(EScheduleStatus.OFF);
+        }else{
+            info.setStatus(EScheduleStatus.ON);
+        }
+
+        ZkUtils.setData(client,Constants.MPS_JOB + parent + name, info);
     }
 }

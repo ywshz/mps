@@ -24,6 +24,7 @@ public class FileInfo implements Serializable {
         this.createTime = createTime;
         this.modifyTime = modifyTime;
         this.type = type;
+        this.status=EScheduleStatus.OFF;
     }
 
     public FileInfo(String name,EScheduleStatus status, Date createTime, Date modifyTime, String type) {

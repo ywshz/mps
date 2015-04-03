@@ -199,6 +199,7 @@ public class MasterNode extends LeaderSelectorListenerAdapter implements
 			ZkUtils.delete(client,Constants.DEPENDENCY_TREE + Constants.ZK_SEPARATOR + job + Constants.ZK_SEPARATOR + jobId);
 			if (ZkUtils.getChildren(client, Constants.DEPENDENCY_TREE + Constants.ZK_SEPARATOR + job).isEmpty()){
 				String realJobPath = ZkUtils.getData(client,Constants.JOB_ID_PATH_MAPPING + Constants.ZK_SEPARATOR + job);
+                if(realJobPath==null) continue;
 				JobInfo jobInfo = (JobInfo)ZkUtils.getData(client, realJobPath + Constants.JOB_INFO ,JobInfo.class);
 				// 触发依赖任务
 				try {

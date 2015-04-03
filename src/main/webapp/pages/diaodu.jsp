@@ -107,14 +107,14 @@
                             <td><fmt:formatDate value="${file.createTime}" pattern="yyyy-MM-dd HH:mm:ss"/></td>
                             <td><fmt:formatDate value="${file.modifyTime}" pattern="yyyy-MM-dd HH:mm:ss"/></td>
                             <td>
-                                <button class="btn btn-default btn-xs" type="submit">开启/关闭</button>
+                                <button class="btn btn-default btn-xs" type="submit" onclick="javascript:startOrStop();">开启/关闭</button>
                                 <button class="btn btn-default btn-xs" type="submit"
                                         onclick="javascript:detail('${parent}/${file.name}');">详情
                                 </button>
                                 <button class="btn btn-default btn-xs" type="submit"
                                         onclick="javascript:detail('${parent}/${file.name}');">历史
                                 </button>
-                                <button class="btn btn-default btn-xs" type="submit">删除</button>
+                                <button class="btn btn-default btn-xs" type="submit" onclick="javascript:deleteTask('${parent}/${file.name}');">删除</button>
                             </td>
                         </c:if>
                         <c:if test="${file.type eq 'folder'}">
@@ -127,7 +127,7 @@
                                 <button class="btn btn-default btn-xs" type="submit"
                                         onclick="javascript:enter('${parent}/${file.name}');">进入
                                 </button>
-                                <button class="btn btn-default btn-xs" type="submit">删除</button>
+                                <button class="btn btn-default btn-xs" type="submit" onclick="javascript:deleteTask('${parent}/${file.name}');">删除</button>
                             </td>
                         </c:if>
                     </tr>
@@ -190,8 +190,8 @@
                                     <input type="radio" name="scheduleType" id="radioSchedualByDependency" value="2">
                                     依赖
                                 </label>
-                                <input type="text" class="form-control" id="dependency" name="">
-                                <input type="text" class="form-control" id="real-dependency" name="dependencies">
+                                <input type="text" class="form-control" id="dependency" name="" placeholder="ID1,ID2, required">
+                                <input type="text" class="form-control" id="real-dependency" name="dependencies" placeholder="Job2,Job2">
                             </div>
                         </div>
                     </div>
@@ -253,6 +253,7 @@
 <form action="${path}/files/list.do" id="refresh-form" method="post">
     <input type="hidden" name="parent" value="${parent}" id="parent-input">
 </form>
+
 <!-- Bootstrap core JavaScript
 ================================================== -->
 <!-- Placed at the end of the document so the pages load faster -->

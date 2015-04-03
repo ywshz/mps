@@ -6,7 +6,9 @@ import com.mopote.mps.enums.EnumSerializer;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
 import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.curator.retry.RetryNTimes;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
@@ -33,6 +35,16 @@ public class ZkUtils {
 				});
 		gson = gsonBuilder.create();
 	}
+
+    public static Long generateNewId(CuratorFramework client) {
+        DistributedAtomicLong count = new DistributedAtomicLong(client,
+                Constants.JOB_RUN_ID_PATH, new RetryNTimes(10, 10));
+        try {
+            return count.increment().postValue();
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
 	public static CuratorFramework newZkClient() {
 		RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);

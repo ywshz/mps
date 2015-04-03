@@ -2,6 +2,7 @@ package com.mopote.mps.web;
 
 import com.mopote.mps.job.JobInfo;
 import com.mopote.mps.service.WebUIService;
+import com.mopote.mps.web.webbean.ResponseBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
@@ -47,9 +48,28 @@ public class FileManagerController {
     }
 
     @RequestMapping("/save-update-task.do")
-    public String saveUpdateTask(String parent,String name,JobInfo jobInfo, HttpServletRequest request){
-        
+    public @ResponseBody
+    ResponseBean saveUpdateTask(String parent,JobInfo jobInfo, HttpServletRequest request){
+        if(jobInfo.getId() == null){
+            webService.addTask(parent,jobInfo);
+        }else{
+            webService.updateTask(parent, jobInfo);
+        }
         request.setAttribute("parent",parent);
-        return "forward:/files/list.do";
+        return new ResponseBean(200,"成功");
+    }
+
+    @RequestMapping("/delete-task.do")
+    public @ResponseBody
+    ResponseBean deleteTask(String parent,String name){
+        webService.delete(parent,name);
+        return new ResponseBean(200,"成功");
+    }
+
+    @RequestMapping("/start-or-stop.do")
+    public @ResponseBody
+    ResponseBean startOrStop(String parent,String name){
+        webService.startOrStop(parent,name);
+        return new ResponseBean(200,"成功");
     }
 }
